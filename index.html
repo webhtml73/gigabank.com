@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gigabank</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-bg-hover: #334155;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+      --gradient-card: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      width: 100%;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(30,41,59,0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-weight: 800;
+      font-size: 1.4rem;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      cursor: pointer;
+    }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+    .balance-mini { font-size: 0.9rem; color: var(--text-muted); }
+    .balance-mini strong { color: var(--text); }
+    .btn-logout {
+      background: transparent;
+      border: 1px solid #475569;
+      color: var(--text-muted);
+      padding: 0.4rem 0.9rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+    main {
+      width: 100%;
+      max-width: 480px;
+      padding: 1.5rem 1rem 3rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .page { display: none; flex-direction: column; gap: 1.5rem; }
+    .page.active { display: flex; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .reg-hero { text-align: center; padding: 2rem 0 1rem; }
+    .reg-hero h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .reg-hero p { color: var(--text-muted); font-size: 0.95rem; }
+    .reg-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .form-group label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+    input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    input:focus { outline: none; border-color: var(--primary); }
+    .bonus-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.3);
+      padding: 0.6rem 1.2rem;
+      border-radius: 999px;
+      color: var(--success);
+      font-weight: 600;
+      font-size: 0.95rem;
+      align-self: center;
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--gradient);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-secondary {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--card-bg);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: var(--card-bg-hover); border-color: var(--primary); }
+    .bank-card {
+      background: var(--gradient);
+      border-radius: 20px;
+      padding: 1.5rem;
+      color: white;
+      aspect-ratio: 1.586 / 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 20px 50px rgba(99,102,241,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .bank-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 60%;
+      height: 200%;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .card-chip {
+      width: 40px;
+      height: 30px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 6px;
+      margin-top: 0.5rem;
+    }
+    .card-brand { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.05em; }
+    .card-number {
+      font-size: 1.15rem;
+      letter-spacing: 0.15em;
+      font-family: 'Courier New', monospace;
+      z-index: 1;
+    }
+    .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; z-index: 1; }
+    .card-name { font-size: 0.8rem; opacity: 0.9; }
+    .card-expiry { font-size: 0.8rem; opacity: 0.8; }
+    .balance-section { text-align: center; padding: 1.5rem 0 0.5rem; }
+    .balance-label { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.3rem; }
+    .balance-amount { font-size: 2.4rem; font-weight: 800; }
+    .balance-amount .currency { color: var(--text-muted); font-weight: 500; }
+    .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    .action-btn {
+      background: var(--card-bg);
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 1rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .action-btn:hover { background: var(--card-bg-hover); border-color: var(--primary); transform: translateY(-2px); }
+    .action-icon { font-size: 1.5rem; }
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+    .overlay.active { display: flex; animation: fadeIn 0.2s; }
+    .modal {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 1.75rem;
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .modal h2 { font-size: 1.3rem; display: flex; justify-content: space-between; align-items: center; }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--danger); }
+    .history-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .history-item {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #334155;
+    }
+    .history-left { display: flex; flex-direction: column; gap: 0.2rem; }
+    .history-type { font-weight: 600; font-size: 0.95rem; }
+    .history-date { font-size: 0.8rem; color: var(--text-muted); }
+    .history-amount { font-weight: 700; font-size: 1.05rem; }
+    .history-amount.in { color: var(--success); }
+    .history-amount.out { color: var(--danger); }
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      border: 1px solid #475569;
+      padding: 0.85rem 1.5rem;
+      border-radius: 12px;
+      color: var(--text);
+      font-weight: 500;
+      z-index: 300;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      max-width: 90%;
+      text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: var(--success); }
+    .toast.error { border-color: var(--danger); }
+    .profile-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid #334155;
+    }
+    .profile-row:last-child { border-bottom: none; }
+    .profile-key { color: var(--text-muted); font-size: 0.9rem; }
+    .profile-val { font-weight: 600; }
+    .btn-back {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .btn-back:hover { opacity: 0.8; }
+    .spinner-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 250;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .spinner-overlay.active { display: flex; }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #334155;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner-text { color: var(--text-muted); font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo" onclick="navigate('home')">Gigabank</div>
+    <div class="header-right" id="headerRight" style="display:none">
+      <div class="balance-mini">Баланс: <strong id="headerBalance">0 ₽</strong></div>
+      <button class="btn-logout" onclick="logout()">Выйти</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- === Регистрация === -->
+    <div id="page-register" class="page active">
+      <div class="reg-hero">
+        <h1>Добро пожаловать в Gigabank</h1>
+        <p>Создайте аккаунт за 10 секунд и получите 500 ₽ на счёт</p>
+      </div>
+      <div class="reg-card">
+        <div class="form-group">
+          <label>Как вас зовут?</label>
+          <input type="text" id="regName" placeholder="Иван Иванов" maxlength="40"/>
+        </div>
+        <div class="bonus-pill"><span>🎁</span> Бонус 500 ₽ при регистрации</div>
+        <button class="btn-primary" onclick="createAccount()">Создать аккаунт</button>
+      </div>
+    </div>
+
+    <!-- === Главная === -->
+    <div id="page-home" class="page">
+      <div class="bank-card">
+        <div class="card-top">
+          <div>
+            <div class="card-brand">Gigabank</div>
+            <div class="card-chip"></div>
+          </div>
+          <div style="font-size:0.75rem;opacity:0.7;text-align:right;">Виртуальная<br/>карта</div>
+        </div>
+        <div class="card-number" id="cardNumberDisplay">0000 0000 0000 0000</div>
+        <div class="card-bottom">
+          <div class="card-name" id="cardNameDisplay">YOUR NAME</div>
+          <div class="card-expiry" id="cardExpDisplay">12/30</div>
+        </div>
+      </div>
+      <div class="balance-section">
+        <div class="balance-label">Баланс</div>
+        <div class="balance-amount"><span id="balanceAmount">0</span> <span class="currency">₽</span></div>
+      </div>
+      <div class="actions">
+        <button class="action-btn" onclick="openModal('transfer')"><span class="action-icon">↗️</span> Перевод</button>
+        <button class="action-btn" onclick="openModal('topup')"><span class="action-icon">⬇️</span> Пополнить</button>
+        <button class="action-btn" onclick="navigate('history')"><span class="action-icon">📋</span> История</button>
+      </div>
+      <div style="background:var(--card-bg);border:1px solid #334155;border-radius:14px;cursor:pointer;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;" onclick="navigate('profile')">
+        <div style="display:flex;align-items:center;gap:0.7rem;">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;" id="avatarLetter">?</div>
+          <div>
+            <div style="font-weight:600;" id="profileNameDisplay">Имя</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">Профиль и настройки</div>
+          </div>
+        </div>
+        <span style="color:var(--text-muted);font-size:1.2rem;">›</span>
+      </div>
+    </div>
+
+    <!-- === История === -->
+    <div id="page-history" class="page">
+      <button class="btn-back" onclick="navigate('home')">← Назад</button>
+      <h2 style="font-size:1.4rem;">История операций</h2>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <!-- === Профиль === -->
+    <div id="page-profile" class="page">
+      <button class="btn-back" onclick="navigate('home')">← Назад</button>
+      <h2 style="font-size:1.4rem;">Профиль</h2>
+      <div class="bank-card" style="margin-bottom:1rem;">
+        <div class="card-top">
+          <div>
+            <div class="card-brand">Gigabank</div>
+            <div class="card-chip"></div>
+          </div>
+        </div>
+        <div class="card-number" id="cardNumberProfile">0000 0000 0000 0000</div>
+        <div class="card-bottom">
+          <div class="card-name" id="cardNameProfile">YOUR NAME</div>
+          <div class="card-expiry" id="cardExpProfile">12/30</div>
+        </div>
+      </div>
+      <div style="background:var(--card-bg);border-radius:14px;padding:0.5rem 1.25rem;border:1px solid #334155;">
+        <div class="profile-row"><span class="profile-key">Имя</span><span class="profile-val" id="profileName">—</span></div>
+        <div class="profile-row"><span class="profile-key">Номер карты</span><span class="profile-val" id="profileCard" style="font-family:'Courier New',monospace;font-size:0.85rem;">—</span></div>
+        <div class="profile-row"><span class="profile-key">Срок действия</span><span class="profile-val" id="profileExp">—</span></div>
+        <div class="profile-row"><span class="profile-key">Баланс</span><span class="profile-val" id="profileBalance">—</span></div>
+        <div class="profile-row"><span class="profile-key">Дата регистрации</span><span class="profile-val" id="profileRegDate">—</span></div>
+      </div>
+      <button class="btn-secondary" style="border-color:var(--danger);color:var(--danger);margin-top:1rem;" onclick="logout()">Выйти из аккаунта</button>
+    </div>
+  </main>
+
+  <!-- Модальные окна -->
+  <div class="overlay" id="overlay">
+    <div class="modal" id="modalContent"></div>
+  </div>
+
+  <!-- Спиннер -->
+  <div class="spinner-overlay" id="spinner">
+    <div class="spinner"></div>
+    <div class="spinner-text" id="spinnerText">Обработка...</div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'gigabank_account';
+    function getData() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } }
+    function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    function formatMoney(n) { return new Intl.NumberFormat('ru-RU').format(Math.floor(n * 100) / 100); }
+    function formatDate(iso) { return new Date(iso).toLocaleDateString('ru-RU', { day:'2-digit', month:'long', year:'numeric' }); }
+    function formatDateTime(iso) { return new Date(iso).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); }
+    function generateCardNumber() {
+      let g = [];
+      for (let i = 0; i < 4; i++) g.push(String(Math.floor(1000 + Math.random() * 9000)));
+      return g.join(' ');
+    }
+    function generateExpiry() {
+      const now = new Date();
+      const expYear = (now.getFullYear() + 4) % 100;
+      return `${String(now.getMonth()+1).padStart(2,'0')}/${String(expYear).padStart(2,'0')}`;
+    }
+    function showToast(msg, type='') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+    function showSpinner(text='Обработка...') {
+      document.getElementById('spinnerText').textContent = text;
+      document.getElementById('spinner').classList.add('active');
+    }
+    function hideSpinner() { document.getElementById('spinner').classList.remove('active'); }
+
+    function navigate(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('page-' + page);
+      if (target) target.classList.add('active');
+      if (page === 'home') renderHome();
+      if (page === 'history') renderHistory();
+      if (page === 'profile') renderProfile();
+      window.scrollTo(0, 0);
+    }
+
+    function createAccount() {
+      const name = document.getElementById('regName').value.trim();
+      if (!name) { showToast('Введите ваше имя', 'error'); return; }
+      if (name.length < 2) { showToast('Имя слишком короткое', 'error'); return; }
+      const account = {
+        name, cardNumber: generateCardNumber(), expiry: generateExpiry(),
+        balance: 500, createdAt: new Date().toISOString(),
+        history: [{ type:'in', title:'Бонус за регистрацию', amount:500, date:new Date().toISOString() }]
+      };
+      saveData(account);
+      showToast('Аккаунт создан! 500 ₽ зачислены', 'success');
+      setTimeout(() => navigate('home'), 500);
+    }
+
+    function renderHome() {
+      const data = getData();
+      if (!data) { navigate('register'); return; }
+      document.getElementById('headerRight').style.display = 'flex';
+      document.getElementById('headerBalance').textContent = formatMoney(data.balance) + ' ₽';
+      document.getElementById('balanceAmount').textContent = formatMoney(data.balance);
+      document.getElementById('cardNumberDisplay').textContent = data.cardNumber;
+      document.getElementById('cardNameDisplay').textContent = data.name.toUpperCase();
+      document.getElementById('cardExpDisplay').textContent = data.expiry;
+      document.getElementById('avatarLetter').textContent = data.name.charAt(0).toUpperCase();
+      document.getElementById('profileNameDisplay').textContent = data.name;
+    }
+
+    function renderHistory() {
+      const data = getData();
+      if (!data) return;
+      const list = document.getElementById('historyList');
+      if (!data.history || data.history.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>Операций пока нет</p></div>';
+        return;
+      }
+      list.innerHTML = data.history.slice().reverse().map(item => {
+        const isIn = item.type === 'in';
+        return `<div class="history-item">
+          <div class="history-left"><div class="history-type">${item.title}</div><div class="history-date">${formatDateTime(item.date)}</div></div>
+          <div class="history-amount ${isIn?'in':'out'}">${isIn?'+':'−'} ${formatMoney(item.amount)} ₽</div></div>`;
+      }).join('');
+    }
+
+    function renderProfile() {
+      const data = getData();
+      if (!data) return;
+      document.getElementById('cardNumberProfile').textContent = data.cardNumber;
+      document.getElementById('cardNameProfile').textContent = data.name.toUpperCase();
+      document.getElementById('cardExpProfile').textContent = data.expiry;
+      document.getElementById('profileName').textContent = data.name;
+      document.getElementById('profileCard').textContent = data.cardNumber;
+      document.getElementById('profileExp').textContent = data.expiry;
+      document.getElementById('profileBalance').textContent = formatMoney(data.balance) + ' ₽';
+      document.getElementById('profileRegDate').textContent = formatDate(data.createdAt);
+    }
+
+    function openModal(type) {
+      const content = document.getElementById('modalContent');
+      if (type === 'transfer') {
+        content.innerHTML = `<h2>Перевод <button class="modal-close" onclick="closeModal()">&times;</button></h2>
+          <div class="form-group"><label>Куда (номер карты, телефон или счёт)</label><input type="text" id="trTo" placeholder="2200 1234 5678 9012" /></div>
+          <div class="form-group"><label>Сумма, ₽</label><input type="number" id="trAmount" placeholder="0" min="1" /></div>
+          <button class="btn-primary" onclick="doTransfer()">Перевести</button>`;
+      } else if (type === 'topup') {
+        content.innerHTML = `<h2>Пополнение <button class="modal-close" onclick="closeModal()">&times;</button></h2>
+          <div class="form-group"><label>Откуда</label>
+          <select id="tpSource" style="width:100%;padding:0.85rem 1rem;background:#0f172a;border:1px solid #334155;border-radius:10px;color:var(--text);font-size:1rem;">
+            <option value="card">С карты другого банка</option><option value="sbp">Через СБП</option><option value="wallet">С электронного кошелька</option></select></div>
+          <div class="form-group"><label>Сумма, ₽</label><input type="number" id="tpAmount" placeholder="0" min="1" /></div>
+          <p style="font-size:0.85rem;color:var(--text-muted);">Деньги поступают через 1–2 минуты</p>
+          <button class="btn-primary" onclick="doTopup()">Пополнить</button>`;
+      }
+      document.getElementById('overlay').classList.add('active');
+    }
+    function closeModal() { document.getElementById('overlay').classList.remove('active'); }
+
+    function doTransfer() {
+      const data = getData();
+      if (!data) return;
+      const to = document.getElementById('trTo').value.trim();
+      const amount = parseFloat(document.getElementById('trAmount').value);
+      if (!to) { showToast('Укажите получателя', 'error'); return; }
+      if (!amount || amount <= 0) { showToast('Введите сумму', 'error'); return; }
+      if (amount > data.balance) { showToast('Недостаточно средств', 'error'); return; }
+      closeModal();
+      showSpinner('Перевод...');
+      setTimeout(() => {
+        data.balance -= amount;
+        data.history.push({ type:'out', title:'Перевод: ' + to, amount, date:new Date().toISOString() });
+        saveData(data);
+        hideSpinner();
+        showToast(`Переведено ${formatMoney(amount)} ₽`, 'success');
+        navigate('home');
+      }, 1000);
+    }
+
+    function doTopup() {
+      const data = getData();
+      if (!data) return;
+      const sel = document.getElementById('tpSource');
+      const sourceName = sel.options[sel.selectedIndex].text;
+      const amount = parseFloat(document.getElementById('tpAmount').value);
+      if (!amount || amount <= 0) { showToast('Введите сумму', 'error'); return; }
+      closeModal();
+      showSpinner('Ожидание платежа...');
+      setTimeout(() => {
+        data.balance += amount;
+        data.history.push({ type:'in', title:'Пополнение: ' + sourceName, amount, date:new Date().toISOString() });
+        saveData(data);
+        hideSpinner();
+        showToast(`Зачислено ${formatMoney(amount)} ₽`, 'success');
+        navigate('home');
+      }, 1500);
+    }
+
+    function logout() {
+      localStorage.removeItem(STORAGE_KEY);
+      document.getElementById('headerRight').style.display = 'none';
+      showToast('Вы вышли из аккаунта');
+      navigate('register');
+      document.getElementById('regName').value = '';
+    }
+
+    (function init() {
+      const data = getData();
+      navigate(data ? 'home' : 'register');
+    })();
+
+    document.getElementById('overlay').addEventListener('click', (e) => {
+      if (e.target.id === 'overlay') closeModal();
+    });
+  </script>
+</body>
+</html>
